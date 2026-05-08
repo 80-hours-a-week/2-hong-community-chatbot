@@ -4,7 +4,7 @@
 
 ## 1. 프로젝트 개요
 - **목표**: LLM 모델을 커뮤니티 데이터를 기반으로 학습하여 커뮤니티 유저 페르소나 채팅 봇 구현
-- **기술 스택**: pytorch, transformers, LoRA, RAG, Gemma 4
+- **기술 스택**: pytorch, transformers, LoRA, RAG, Gemma 4, MySQL, Langchain, MCP
 - **주요 기능**:
     - LLM 모델 학습: Gemma 4 모델을 기반으로 LoRA를 활용해 커뮤니티 특화 데이터로 학습
     - 실시간 응답 생성: RAG를 활용해 실시간으로 커뮤니티 주제에 맞는 응답 생성
