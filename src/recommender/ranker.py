@@ -98,6 +98,25 @@ def rank_candidates(
     top_k: int = 5,
     mode: str = "hybrid",
 ) -> list[dict]:
+    rows, _diagnostics = score_candidates(
+        query_embedding=query_embedding,
+        shop_embeddings=shop_embeddings,
+        shop_ids=shop_ids,
+        behavior_by_shop=behavior_by_shop,
+        global_behavior_by_shop=global_behavior_by_shop,
+        mode=mode,
+    )
+    return sorted(rows, key=lambda row: row["score"], reverse=True)[:top_k]
+
+
+def score_candidates(
+    query_embedding: np.ndarray,
+    shop_embeddings: np.ndarray,
+    shop_ids: list[str],
+    behavior_by_shop: dict[str, float],
+    global_behavior_by_shop: dict[str, float] | None = None,
+    mode: str = "hybrid",
+) -> tuple[list[dict], dict[str, float | int | str]]:
     raw_semantic_scores = shop_embeddings @ query_embedding
     semantic_scores = minmax(raw_semantic_scores)
     alpha, beta = select_weights(len(behavior_by_shop))
@@ -131,7 +150,22 @@ def rank_candidates(
             }
         )
 
-    return sorted(rows, key=lambda row: row["score"], reverse=True)[:top_k]
+    score_values = np.array([row["score"] for row in rows], dtype=np.float32)
+    diagnostics: dict[str, float | int | str] = {
+        "mode": mode,
+        "candidate_count": len(rows),
+        "matched_behavior_count": len(behavior_by_shop),
+        "global_behavior_count": len(global_behavior_by_shop),
+        "alpha": alpha,
+        "beta": beta,
+        "raw_semantic_min": float(np.min(raw_semantic_scores)),
+        "raw_semantic_max": float(np.max(raw_semantic_scores)),
+        "raw_semantic_mean": float(np.mean(raw_semantic_scores)),
+        "score_min": float(np.min(score_values)),
+        "score_max": float(np.max(score_values)),
+        "score_mean": float(np.mean(score_values)),
+    }
+    return rows, diagnostics
 
 
 def build_global_popularity_frame(behavior_payload: dict[str, object]) -> pd.DataFrame:

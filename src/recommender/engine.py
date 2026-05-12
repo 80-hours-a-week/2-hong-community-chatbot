@@ -9,7 +9,7 @@ import pandas as pd
 
 from src.config import settings
 from src.recommender.query_parser import encode_query, load_text_encoder
-from src.recommender.ranker import rank_candidates
+from src.recommender.ranker import score_candidates
 
 
 class RecommendationEngine:
@@ -51,8 +51,21 @@ class RecommendationEngine:
         self.shops_by_id = self.shops.set_index("shop_id", drop=False)
 
     def recommend(self, query: str, top_k: int = 5, mode: str = "hybrid") -> list[dict]:
+        recommendations, _diagnostics = self.recommend_with_diagnostics(
+            query=query,
+            top_k=top_k,
+            mode=mode,
+        )
+        return recommendations
+
+    def recommend_with_diagnostics(
+        self,
+        query: str,
+        top_k: int = 5,
+        mode: str = "hybrid",
+    ) -> tuple[list[dict], dict]:
         if not query.strip():
-            return []
+            return [], {"mode": mode, "candidate_count": 0}
 
         query_embedding = encode_query(query, self.encoder)
         if self.shop_embeddings.shape[1] != query_embedding.shape[0]:
@@ -64,14 +77,22 @@ class RecommendationEngine:
             )
 
         behavior_by_shop = self.behavior_scores.get(query, {})
-        ranked = rank_candidates(
+        rows, diagnostics = score_candidates(
             query_embedding=query_embedding,
             shop_embeddings=self.shop_embeddings,
             shop_ids=self.shop_ids,
             behavior_by_shop=behavior_by_shop,
             global_behavior_by_shop=self.global_scores,
-            top_k=top_k,
             mode=mode,
+        )
+        ranked = sorted(rows, key=lambda row: row["score"], reverse=True)[:top_k]
+        diagnostics.update(
+            {
+                "embedding_backend": self.encoder.backend_name,
+                "embedding_dimension": int(self.shop_embeddings.shape[1]),
+                "shop_count": int(len(self.shops)),
+                "top_k": int(top_k),
+            }
         )
 
         results = []
@@ -89,7 +110,7 @@ class RecommendationEngine:
                     "rank_reason": make_rank_reason(row, meta),
                 }
             )
-        return results
+        return results, diagnostics
 
 
 def _clean(value):
