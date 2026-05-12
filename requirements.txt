@@ -1,0 +1,12 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pandas>=2.2.0
+numpy>=1.26.0
+pydantic>=2.7.0
+python-dotenv>=1.0.0
+
+# Optional, but recommended for production-quality Korean semantic search.
+sentence-transformers>=3.0.0
+
+# Optional, used when GEMINI_API_KEY is configured.
+google-genai>=1.0.0

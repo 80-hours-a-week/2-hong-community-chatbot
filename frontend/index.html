@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>동네 맛집 추천 챗봇</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="chat-panel" aria-label="맛집 추천 챗봇">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Restaurant Recommender</p>
+            <h1>동네 맛집 추천</h1>
+          </div>
+          <div class="status-group">
+            <span id="healthBadge" class="health-badge pending">연결 확인 중</span>
+            <button id="resetButton" class="icon-button" type="button" title="새 대화" aria-label="새 대화">
+              ↻
+            </button>
+          </div>
+        </header>
+
+        <div id="messageList" class="message-list" aria-live="polite"></div>
+
+        <div class="quick-prompts" aria-label="추천 질문 예시">
+          <button type="button" data-prompt="압구정 파스타 데이트">압구정 파스타 데이트</button>
+          <button type="button" data-prompt="강남 회식하기 좋은 고기집">강남 회식 고기집</button>
+          <button type="button" data-prompt="성수 조용한 카페">성수 조용한 카페</button>
+        </div>
+
+        <form id="chatForm" class="composer">
+          <label class="sr-only" for="messageInput">메시지</label>
+          <textarea
+            id="messageInput"
+            name="message"
+            rows="1"
+            maxlength="500"
+            placeholder="지역, 음식, 상황을 입력하세요"
+            autocomplete="off"
+            required
+          ></textarea>
+          <label class="sr-only" for="topKSelect">추천 개수</label>
+          <select id="topKSelect" name="topK" title="추천 개수" aria-label="추천 개수">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="7">7</option>
+            <option value="10">10</option>
+          </select>
+          <button id="sendButton" class="send-button" type="submit">보내기</button>
+        </form>
+      </section>
+    </main>
+
+    <template id="messageTemplate">
+      <article class="message">
+        <div class="bubble"></div>
+      </article>
+    </template>
+
+    <template id="recommendationTemplate">
+      <article class="recommendation-card">
+        <div class="card-head">
+          <div>
+            <h3></h3>
+            <p class="meta"></p>
+          </div>
+          <span class="score"></span>
+        </div>
+        <p class="reason"></p>
+        <dl class="details"></dl>
+        <div class="score-bars"></div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

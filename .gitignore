@@ -206,6 +206,9 @@ tempCodeRunnerFile.py
 # Ruff stuff:
 .ruff_cache/
 
+# Generated recommender indexes
+data/processed/
+
 # PyPI configuration file
 .pypirc
 
