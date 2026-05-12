@@ -45,6 +45,7 @@ def build_index(
         "shop_count": int(len(shops)),
         "log_count": int(len(logs)),
         "embedding_backend": encoder.backend_name,
+        "embedding_dimension": int(shop_embeddings.shape[1]),
         "behavior_query_count": int(len(behavior_payload.get("query_scores", {}))),
     }
     (out_path / "index_metadata.json").write_text(

@@ -6,7 +6,7 @@ pydantic>=2.7.0
 python-dotenv>=1.0.0
 
 # Optional, but recommended for production-quality Korean semantic search.
-# sentence-transformers>=3.0.0
+sentence-transformers>=3.0.0
 
 # Optional, used when GEMINI_API_KEY is configured.
-# google-genai>=1.0.0
+google-genai>=1.0.0

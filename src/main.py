@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.chat.memory import ConversationMemory
 from src.chat.service import ChatService
@@ -19,8 +22,16 @@ from src.schemas import (
 
 
 logger = logging.getLogger(__name__)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = PROJECT_ROOT / "frontend"
 
 app = FastAPI(title="2-hong-community-chatbot")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 memory = ConversationMemory(
     max_turns=settings.max_history_turns,
     ttl_seconds=settings.conversation_ttl_seconds,
@@ -89,7 +100,10 @@ def recommend_chat(request: ChatRecommendRequest) -> ChatRecommendResponse:
         ) from exc
 
     query = str(parsed.get("normalized_query") or request.message)
-    recommendations = recommender.recommend(query=query, top_k=request.top_k)
+    try:
+        recommendations = recommender.recommend(query=query, top_k=request.top_k)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     logger.info(
         "recommend conversation_id=%s query=%s result_count=%s",
         conversation_id,
@@ -133,3 +147,7 @@ def recommend_chat(request: ChatRecommendRequest) -> ChatRecommendResponse:
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(status="ok", recommender_loaded=recommender_available())
+
+
+if FRONTEND_DIR.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

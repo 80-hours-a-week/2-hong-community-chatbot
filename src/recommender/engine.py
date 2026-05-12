@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pickle
+import json
 from pathlib import Path
 
 import numpy as np
@@ -18,7 +19,20 @@ class RecommendationEngine:
         embedding_backend: str = settings.embedding_backend,
     ):
         index_path = Path(index_dir)
-        self.encoder = load_text_encoder(embedding_backend)
+        self.index_metadata = _load_index_metadata(index_path)
+        index_backend = self.index_metadata.get("embedding_backend")
+        runtime_backend = embedding_backend
+        if embedding_backend == "auto" and index_backend:
+            runtime_backend = str(index_backend)
+        elif index_backend and embedding_backend != index_backend:
+            raise ValueError(
+                "Embedding backend mismatch: "
+                f"index was built with '{index_backend}', "
+                f"but server is using '{embedding_backend}'. "
+                "Rebuild the index with the same backend or update EMBEDDING_BACKEND."
+            )
+
+        self.encoder = load_text_encoder(runtime_backend)
         self.shop_embeddings = np.load(index_path / "shop_embeddings.npy")
         self.shops = pd.read_pickle(index_path / "shops_indexed.pkl")
 
@@ -41,6 +55,14 @@ class RecommendationEngine:
             return []
 
         query_embedding = encode_query(query, self.encoder)
+        if self.shop_embeddings.shape[1] != query_embedding.shape[0]:
+            raise ValueError(
+                "Embedding dimension mismatch: "
+                f"shop index has {self.shop_embeddings.shape[1]} dimensions, "
+                f"but query embedding has {query_embedding.shape[0]} dimensions. "
+                "Rebuild the index or use the embedding backend recorded in index_metadata.json."
+            )
+
         behavior_by_shop = self.behavior_scores.get(query, {})
         ranked = rank_candidates(
             query_embedding=query_embedding,
@@ -77,6 +99,13 @@ def _clean(value):
         return None
     text = str(value).strip()
     return text or None
+
+
+def _load_index_metadata(index_path: Path) -> dict:
+    metadata_path = index_path / "index_metadata.json"
+    if not metadata_path.exists():
+        return {}
+    return json.loads(metadata_path.read_text(encoding="utf-8"))
 
 
 def make_rank_reason(score_row: dict, meta: dict) -> str:

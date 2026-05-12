@@ -42,6 +42,9 @@ python -m src.recommender.indexer --embedding-backend hashing --max-log-rows 100
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+브라우저에서 `http://localhost:8000`을 열면 간단한 챗봇 프론트엔드를 사용할 수 있습니다.
+`frontend/index.html`을 직접 열어도 기본 API 주소로 `http://localhost:8000`을 사용합니다.
+
 주요 API:
 
 - `POST /chat/session`
